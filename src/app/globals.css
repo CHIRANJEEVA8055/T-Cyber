@@ -1,0 +1,660 @@
+@import "tailwindcss";
+/* The Cyber Investigation Workspace design system (generated from the canvas; see docs/REDESIGN_PLAN.md). */
+@import "./design.css" layer(components);
+
+/* Theme variables. Dark is the default (the design's canvas); <html class="light"> switches every screen. */
+:root {
+  color-scheme: dark;
+  --c-bg: #09090b;
+  --c-panel: #0c0c0f;
+  --c-card: #141417;
+  --c-card2: #111114;
+  --c-inner: #18181b;
+  --c-raise: rgba(255, 255, 255, 0.04);
+  --c-raise2: rgba(255, 255, 255, 0.06);
+  --c-chip: #27272a;
+  --c-chip-fg: #d4d4d8;
+  /* Text on an "info" tint, and a solid fill for destructive buttons, readable in this theme. */
+  --c-info-ink: #93c5fd;
+  --c-danger-solid: #dc2626;
+  --c-fg: #fafafa;
+  --c-fg2: #e4e4e7;
+  --c-fg3: #d4d4d8;
+  --c-sec: #a1a1aa;
+  --c-mut: #8e8e99;
+  --c-dim: #71717a;
+  --c-faint: #52525b;
+  --c-line: rgba(255, 255, 255, 0.07);
+  --c-line-soft: rgba(255, 255, 255, 0.05);
+  --c-line-strong: rgba(255, 255, 255, 0.12);
+  --c-blue: #93c5fd;
+  --c-blue-strong: #60a5fa;
+  --c-teal: #5eead4;
+  --c-teal-strong: #2dd4bf;
+  --c-headbar: rgba(12, 12, 15, 0.75);
+  --c-amber: #fcd34d;
+  --c-orange: #fdba74;
+  --c-orange-strong: #fb923c;
+  --c-violet: #c4b5fd;
+  --c-red: #fca5a5;
+  --c-accent: #2563eb;
+  --c-accent-hover: #1d4ed8;
+  --c-action: #3b82f6;
+  --c-focus: #93c5fd;
+  --c-tint-blue: rgba(96, 165, 250, 0.12);
+  --c-tint-teal: rgba(45, 212, 191, 0.1);
+  --c-tint-amber: rgba(251, 191, 36, 0.1);
+  --c-tint-orange: rgba(251, 146, 60, 0.12);
+  --c-tint-violet: rgba(196, 181, 253, 0.12);
+  --c-tint-red: rgba(248, 113, 113, 0.12);
+}
+html.light {
+  color-scheme: light;
+  --c-bg: #f4f6fa;
+  --c-panel: #ffffff;
+  --c-card: #ffffff;
+  --c-card2: #ffffff;
+  --c-inner: #f8fafc;
+  --c-raise: #f1f5f9;
+  --c-raise2: #eef2f7;
+  --c-chip: #e8f0fe;
+  --c-chip-fg: #1d4ed8;
+  --c-info-ink: #1d4f9e;
+  --c-danger-solid: #b42318;
+  --c-fg: #0f172a;
+  --c-fg2: #1f2937;
+  --c-fg3: #1f2937;
+  --c-sec: #4b5563;
+  --c-mut: #6b7280;
+  --c-dim: #6b7280;
+  --c-faint: #9ca3af;
+  --c-line: #e5e7eb;
+  --c-line-soft: #eef2f7;
+  --c-line-strong: #d1d5db;
+  --c-blue: #1d4ed8;
+  --c-blue-strong: #2563eb;
+  --c-teal: #047857;
+  --c-teal-strong: #14b8a6;
+  --c-headbar: rgba(255, 255, 255, 0.8);
+  --c-amber: #92400e;
+  --c-orange: #c2410c;
+  --c-orange-strong: #c2410c;
+  --c-violet: #6d28d9;
+  --c-red: #b91c1c;
+  --c-action: #2563eb;
+  --c-focus: #2563eb;
+  --c-tint-blue: #dbeafe;
+  --c-tint-teal: #ecfdf5;
+  --c-tint-amber: #fef3c7;
+  --c-tint-orange: #ffedd5;
+  --c-tint-violet: #ede9fe;
+  --c-tint-red: #fee2e2;
+}
+
+/* Colour utilities follow the theme variables (text-fg, bg-card, border-line, …). The older names (ink,
+   surface, action, …) point at the same variables while the remaining screens move to the design. */
+@theme inline {
+  --color-bg: var(--c-bg);
+  --color-panel: var(--c-panel);
+  --color-card: var(--c-card);
+  --color-inner: var(--c-inner);
+  --color-raise: var(--c-raise);
+  --color-raise2: var(--c-raise2);
+  --color-chip: var(--c-chip);
+  --color-fg: var(--c-fg);
+  --color-fg2: var(--c-fg2);
+  --color-fg3: var(--c-fg3);
+  --color-sec: var(--c-sec);
+  --color-mut: var(--c-mut);
+  --color-dim: var(--c-dim);
+  --color-faint: var(--c-faint);
+  --color-blue: var(--c-blue);
+  --color-teal: var(--c-teal);
+  --color-amber: var(--c-amber);
+  --color-orange: var(--c-orange);
+  --color-orange-strong: var(--c-orange-strong);
+  --color-violet: var(--c-violet);
+  --color-red: var(--c-red);
+  --color-accent: var(--c-accent);
+  --color-line: var(--c-line);
+  --color-line-soft: var(--c-line-soft);
+  --color-line-strong: var(--c-line-strong);
+  --color-canvas: var(--c-bg);
+  --color-surface: var(--c-card);
+  --color-surface-muted: var(--c-inner);
+  --color-surface-sunken: var(--c-raise2);
+  --color-ink: var(--c-fg);
+  --color-ink-2: var(--c-sec);
+  --color-ink-3: var(--c-mut);
+  --color-line-input: var(--c-line-strong);
+  --color-action: var(--c-action);
+  --color-action-hover: var(--c-accent-hover);
+  --color-action-tint: var(--c-tint-blue);
+  --color-action-tint-strong: var(--c-tint-blue);
+  --color-focus: var(--c-focus);
+  --color-success: var(--c-teal);
+  --color-success-tint: var(--c-tint-teal);
+  --color-warning: var(--c-amber);
+  --color-warning-tint: var(--c-tint-amber);
+  --color-danger: var(--c-red);
+  --color-danger-tint: var(--c-tint-red);
+  --color-info-ink: var(--c-info-ink);
+  --color-danger-solid: var(--c-danger-solid);
+  --color-neutral: var(--c-sec);
+  --color-neutral-tint: var(--c-raise2);
+  --color-amber-soft: var(--c-tint-amber);
+}
+
+/* T-CYBER design tokens. See .ux-profile.md for the rationale behind each value. */
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+
+  --text-meta: 0.75rem;
+  --text-meta--line-height: 1.125rem;
+  --text-label: 0.8125rem;
+  --text-label--line-height: 1.25rem;
+  --text-body: 0.875rem;
+  --text-body--line-height: 1.3125rem;
+  --text-section: 1rem;
+  --text-section--line-height: 1.375rem;
+  --text-heading: 1.125rem;
+  --text-heading--line-height: 1.5rem;
+  --text-title: 1.625rem;
+  --text-title--line-height: 2rem;
+
+  --radius-chip: 5px;
+  --radius-control: 7px;
+  --radius-panel: 12px;
+
+  --shadow-raised: 0 1px 2px rgba(21, 35, 59, 0.04), 0 2px 8px rgba(21, 35, 59, 0.06);
+  --shadow-control: 0 1px 2px rgba(21, 35, 59, 0.05);
+  --shadow-highlight: inset 0 1px 0 0 rgba(255, 255, 255, 0.1);
+  --shadow-overlay: 0 4px 12px rgba(16, 28, 48, 0.05), 0 20px 64px rgba(16, 28, 48, 0.07);
+
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    background: var(--color-canvas);
+  }
+  body {
+    font-family: var(--font-sans);
+    font-size: var(--text-body);
+    line-height: var(--text-body--line-height);
+    color: var(--color-ink);
+    background: var(--color-canvas);
+    /* Proportional figures read better in Inter; columns of amounts and times opt in with tabular-nums. */
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  h1, h2, h3 {
+    letter-spacing: -0.015em;
+    line-height: 1.25;
+    font-weight: 600;
+    text-wrap: balance;
+  }
+  ::selection {
+    background: var(--color-action-tint-strong);
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+  }
+  [hidden] {
+    display: none !important;
+  }
+}
+
+@layer components {
+  body {
+    background: var(--c-bg);
+    color: var(--c-fg);
+  }
+}
+
+@layer components {
+  /* Panels: hairline border first, restrained layered shadow only on raised surfaces. */
+  .panel {
+    background: var(--color-surface);
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-panel);
+    box-shadow: 0 1px 3px rgba(21, 35, 59, 0.04);
+  }
+  .panel-raised {
+    background: var(--color-surface);
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-panel);
+    box-shadow: var(--shadow-highlight), var(--shadow-raised);
+  }
+  /* Sticky chrome: translucent with blur where supported, opaque fallback otherwise. */
+  /* Sticky toolbars: the theme's panel colour, opaque (no glass blur), so text stays readable in both themes. */
+  .chrome-blur {
+    background: var(--c-panel);
+  }
+  .scrim {
+    background: rgb(21 35 59 / 0.4);
+  }
+  @supports (backdrop-filter: blur(1px)) {
+    .scrim {
+      backdrop-filter: blur(2px);
+    }
+  }
+
+  /* Case graph: status chips on record cards, invisible edge anchors, visible keyboard focus. */
+  .graph-chip {
+    display: inline-flex;
+    align-items: center;
+    height: 1.25rem;
+    flex-shrink: 0;
+    white-space: nowrap;
+    border-width: 1px;
+    border-radius: var(--radius-chip);
+    padding-inline: 0.375rem;
+    font-size: var(--text-meta);
+    line-height: 1;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+  }
+  .graph-canvas .react-flow__handle.graph-handle {
+    opacity: 0;
+    pointer-events: none;
+    min-width: 0;
+    min-height: 0;
+    width: 1px;
+    height: 1px;
+    border: 0;
+  }
+  .graph-canvas .react-flow__node-record {
+    border-radius: var(--radius-panel);
+    cursor: pointer;
+  }
+  .graph-canvas .react-flow__node-record:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 3px;
+  }
+  .graph-canvas .react-flow__node-column {
+    cursor: default;
+  }
+  .graph-canvas .react-flow__edge:focus-visible .react-flow__edge-path {
+    stroke: var(--color-focus) !important;
+    stroke-width: 3px !important;
+  }
+  .graph-canvas .react-flow__edge {
+    cursor: pointer;
+  }
+}
+
+/* Motion: overlays animate with transform + opacity; reduced motion keeps opacity only. */
+@keyframes tc-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes tc-fade-out { from { opacity: 1; } to { opacity: 0; } }
+@keyframes tc-dialog-in { from { opacity: 0; transform: translateY(4px) scale(0.99); } to { opacity: 1; transform: none; } }
+@keyframes tc-drawer-in { from { transform: translateX(100%); } to { transform: none; } }
+@keyframes tc-drawer-out { from { transform: none; } to { transform: translateX(100%); } }
+@keyframes tc-nav-in { from { transform: translateX(-100%); } to { transform: none; } }
+@keyframes tc-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.55; } }
+@keyframes tc-spin { to { transform: rotate(360deg); } }
+
+.anim-scrim[data-state="open"] { animation: tc-fade-in 150ms var(--ease-out); }
+.anim-scrim[data-state="closed"] { animation: tc-fade-out 100ms ease-in; }
+.anim-dialog[data-state="open"] { animation: tc-dialog-in 200ms var(--ease-out); }
+.anim-dialog[data-state="closed"] { animation: tc-fade-out 100ms ease-in; }
+.anim-drawer[data-state="open"] { animation: tc-drawer-in 200ms var(--ease-out); }
+.anim-drawer[data-state="closed"] { animation: tc-drawer-out 150ms ease-in; }
+.anim-nav[data-state="open"] { animation: tc-nav-in 200ms var(--ease-out); }
+.anim-pop[data-state="open"] { animation: tc-fade-in 100ms var(--ease-out); }
+.skeleton { background: var(--color-surface-sunken); border-radius: var(--radius-chip); animation: tc-pulse 1.6s ease-in-out infinite; }
+.spin { animation: tc-spin 0.8s linear infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .anim-dialog[data-state="open"],
+  .anim-drawer[data-state="open"],
+  .anim-nav[data-state="open"] { animation: tc-fade-in 100ms linear; }
+  .anim-drawer[data-state="closed"] { animation: tc-fade-out 100ms linear; }
+  .skeleton { animation: none; }
+  .spin { animation-duration: 2.4s; }
+  html { scroll-behavior: auto; }
+}
+
+@media print {
+  body { background: #fff; }
+  .no-print { display: none !important; }
+  .print-only { display: block !important; }
+  .panel, .panel-raised { box-shadow: none; border-color: #ccc; }
+}
+.print-only { display: none; }
+
+/*
+ * Overlay layering. Radix portals a scrim and its panel separately, so after a quick close-and-reopen the
+ * new scrim can land after the panel in the DOM. Panels therefore sit one layer above scrims instead of
+ * relying on DOM order: page chrome 20–30, scrims 50, drawers/dialogs 51, menus 55, tooltips 60,
+ * toasts 70, skip link 80.
+ */
+
+/* Skip link: out of sight until focused from the keyboard. */
+.skip{position:absolute;left:16px;top:-48px;z-index:60;padding:10px 14px;border-radius:8px;background:#2563eb;color:#fff;font-weight:500}
+.skip:focus{top:12px;color:#fff}
+
+/* Month-on-month figure: its colour depends on the change and on the theme (both computed on the server). */
+.measure .v.momv{color:var(--mom-dark)}
+.light .measure .v.momv{color:var(--mom-light) !important}
+
+/* Narrow screens (≤ 767px): the station shell and dashboard keep to the viewport; tables scroll inside their card. */
+.table.wide{min-width:720px}
+@media (max-width: 767.98px){
+  .scr-dashboard .appbar{padding:0 12px;gap:2px}
+  .scr-dashboard .appbar .brand{padding-right:8px;margin-right:4px}
+  .scr-dashboard .appbar .brand .bn,.scr-dashboard .appbar .brand .bs{display:none}
+  .scr-dashboard .tabsbar .navitem{padding:0 10px}
+  .scr-dashboard .tabsbar .navitem .tl{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+  .scr-dashboard .appbar .right{gap:4px}
+  .scr-dashboard .appbar .profile{padding-left:8px;margin-left:2px}
+  .scr-dashboard .langbtn{padding:0 8px}
+  .hidenarrow{display:none !important}
+  .dashpad{padding:20px 16px !important}
+  .dashpad .pagehead h1{font-size:24px !important}
+  .kpis{grid-template-columns:repeat(2,minmax(0,1fr)) !important;gap:12px !important}
+  .kpis .measure{padding:16px}
+  .kpis .measure .v{font-size:24px}
+  .listhead{padding:16px !important}
+  .listtools{margin-left:0 !important;width:100%}
+  .listtools label{flex:1}
+  .listtools .search{width:100%}
+  .charts{grid-template-columns:minmax(0,1fr) !important;padding:16px !important}
+}
+
+/* Spinner glyphs turn while work is in progress; with reduced motion they stay still (the text says what is happening). */
+@keyframes tc-spin { to { transform: rotate(360deg); } }
+.spin { animation: tc-spin 0.9s linear infinite; }
+@media (prefers-reduced-motion: reduce) { .spin { animation: none; } }
+@media (max-width: 767.98px) { .nfgrid { grid-template-columns: minmax(0, 1fr) !important; } }
+
+/* Case window: the side panel opens from a menu on a phone; elsewhere the menu button is hidden. */
+.casewin{min-height:100vh;background:var(--c-bg)}
+.casewin .shell{min-height:100vh}
+.casewin .main:focus{outline:none}
+.navmenu{display:none;align-items:center;justify-content:center;width:44px;height:44px;margin:-6px 0 -6px -8px;border-radius:8px;border:1px solid var(--c-line);background:var(--c-raise);color:var(--c-sec);cursor:pointer;padding:0;flex:none}
+.navmenu svg{width:16px;height:16px}
+.navmenu:focus-visible{outline:2px solid var(--c-focus);outline-offset:2px}
+.navscrim{display:none}
+.casepad{padding:32px 40px}
+.casehead{padding:24px 40px;background:var(--c-headbar);border-bottom:1px solid var(--c-line-soft)}
+
+/* Page width: content fills the screen up to a cap, then centres, so wide screens never leave a blank strip on one
+   side. Headers use the same gutters, so the title, the content and the app bar line up. */
+:root{--page-max:1600px;--case-max:1440px}
+@media (min-width: 768px){
+  .dashpad{max-width:none !important;padding-left:max(40px,calc((100% - var(--page-max)) / 2)) !important;padding-right:max(40px,calc((100% - var(--page-max)) / 2)) !important}
+  .scr-dashboard .appbar.centred{padding-left:max(40px,calc((100% - var(--page-max)) / 2));padding-right:max(40px,calc((100% - var(--page-max)) / 2))}
+  .casepad{max-width:none !important;padding-left:max(40px,calc((100% - var(--case-max)) / 2)) !important;padding-right:max(40px,calc((100% - var(--case-max)) / 2)) !important}
+  .casehead{padding-left:max(40px,calc((100% - var(--case-max)) / 2)) !important;padding-right:max(40px,calc((100% - var(--case-max)) / 2)) !important}
+}
+
+/* The case window floats over the station: it keeps to the screen with a margin all round, the station shows dimly
+   behind it, and only its content scrolls; the title bar and the side panel stay where they are. */
+@media (min-width: 768px){
+  .casewin{height:100vh;height:100dvh;overflow:hidden;min-height:0}
+  .casewin .shell{height:100%;min-height:0;padding:56px 28px 28px;display:flex;flex-direction:column;overflow:hidden}
+  .casewin .backdrop{position:absolute;inset:56px 0 0;pointer-events:none;overflow:hidden;opacity:.55;filter:blur(1.5px)}
+  .casewin .backdrop .bd-row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;padding:12px 48px}
+  .casewin .backdrop .bd-card{height:112px;border-radius:16px;background:var(--c-raise);border:1px solid var(--c-line-soft)}
+  .casewin .backdrop .bd-list{margin:12px 48px;height:900px;border-radius:16px;background:var(--c-raise);border:1px solid var(--c-line-soft)}
+  .casewin .shell::after{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(1200px 600px at 50% 40%,transparent,rgba(0,0,0,0.35));z-index:0}
+  .light .casewin .shell::after{background:radial-gradient(1200px 600px at 50% 40%,transparent,rgba(15,23,42,0.10))}
+  .casewin .win{position:relative;z-index:1;flex:1;min-height:0;display:flex;flex-direction:column;width:100%;max-width:1840px;margin:0 auto;animation:tc-win-in .18s ease-out}
+  .casewin .winbody{flex:1;min-height:0;flex-wrap:nowrap !important;overflow:hidden}
+  .casewin .winbody > .nav{overflow-y:auto;overscroll-behavior:contain}
+  .casewin .winbody > .main{overflow-y:auto;overscroll-behavior:contain;scroll-padding-top:16px}
+}
+@keyframes tc-win-in{from{opacity:0;transform:translateY(6px) scale(.992)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion: reduce){@keyframes tc-win-in{from{opacity:0}to{opacity:1}}}
+@media (max-width: 767.98px){ .casewin .backdrop{display:none} }
+@media (max-width: 767.98px){
+  .casewin .shell{padding:52px 0 0}
+  .casewin .shelltop{padding:0 16px}
+  .casewin .shelltop .ghost{display:none}
+  .casewin .win{border-radius:12px 12px 0 0}
+  .casewin .winbar{padding:8px 12px}
+  .casewin .navmenu{display:inline-flex}
+  .casewin .winbody > .nav{display:none}
+  .casewin .winbody > .nav.open{display:flex;position:absolute;z-index:30;top:0;bottom:0;left:0;width:min(280px,85vw);min-width:0;flex-basis:auto;overflow-y:auto;box-shadow:0 24px 48px rgba(0,0,0,0.5)}
+  .casewin .winbody > .nav.open.min{width:min(280px,85vw)}
+  .casewin .winbody > .nav.open.min .navitem{font-size:14px;justify-content:flex-start;padding:10px 12px;gap:12px}
+  .casewin .winbody > .nav.open.min .navitem span,.casewin .winbody > .nav.open.min .lbl{display:revert}
+  .casewin .winbody > .nav.open .navtoggle{display:none}
+  .casewin .navscrim{display:block;position:absolute;inset:0;z-index:29;background:rgba(0,0,0,0.45);border:0;padding:0;cursor:pointer}
+  .casepad{padding:20px 16px !important}
+  .casehead{padding:20px 16px !important}
+  .casehead h1{font-size:24px !important}
+  .stack-narrow{grid-template-columns:minmax(0,1fr) !important}
+  .facts{grid-template-columns:repeat(2,minmax(0,1fr)) !important;padding:20px !important;gap:16px 20px !important}
+  .cardpad{padding:20px !important}
+}
+@media (max-width: 479.98px){
+  .facts{grid-template-columns:minmax(0,1fr) !important}
+}
+/* Link colours the design paints blue stay blue (and readable) in the light theme. */
+.light .more,.light .facts .s a{color:var(--c-blue)}
+.light .more:hover,.light .facts .s a:hover{color:var(--c-blue-strong)}
+
+/* Shared form and utility styles for the case screens (the design defines them per artboard). */
+.srt{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.btn.sm{min-height:34px;padding:0 12px;font-size:13px;border-radius:8px}
+.input{width:100%;box-sizing:border-box;border-radius:8px;border:1px solid var(--c-line-strong);background:var(--c-inner);color:var(--c-fg);font:inherit;font-size:14px;padding:0 12px}
+.input:focus-visible{outline:2px solid var(--c-focus);outline-offset:1px;border-color:transparent}
+.input[aria-invalid="true"]{border-color:var(--c-orange-strong)}
+.input::placeholder{color:var(--c-dim)}
+/* A table row's first cell is a real button, so rows open by keyboard as well as by click. */
+.rowbtn{all:unset;cursor:pointer;color:inherit;font-weight:500;display:inline}
+.rowbtn:focus-visible{outline:2px solid var(--c-focus);outline-offset:2px;border-radius:4px}
+@media (max-width: 1023.98px){ .partygrid{grid-template-columns:repeat(2,minmax(0,1fr)) !important} }
+/* "More" links read as links on every case screen, in both themes. */
+.casewin .more{color:var(--c-blue);font-size:14px}
+.casewin .more:hover{color:var(--c-blue-strong)}
+@media (max-width: 767.98px){ .chatlayout{grid-template-columns:minmax(0,1fr) !important} .chatlayout > aside{border-right:0 !important;border-bottom:1px solid var(--c-line)} }
+.citem:hover{background:var(--c-raise)}
+.citem.on{color:var(--c-fg)}
+
+/* Procedure assistant (design: Dashboard artboard, Procedure assistant tab). It fills the screen under the app bar:
+   the chat list and the thread scroll on their own and the composer stays at the bottom. The thread keeps to a
+   readable column on wide screens. */
+.wrap.pa{display:flex;flex:none;box-sizing:border-box;height:calc(100vh - 64px);height:calc(100dvh - 64px);min-height:420px;border-top:1px solid var(--c-line-soft);position:relative;overflow:hidden}
+.pa .cs{overflow-y:auto;overscroll-behavior:contain;position:relative}
+.pa .cs .mini{margin:4px auto 0;display:inline-flex}
+.pa .chat{min-height:0;position:relative}
+.pa .pa-scroll{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;display:flex;flex-direction:column}
+.pa .thread{flex:1;max-width:880px;margin:0 auto}
+.pa .composer{max-width:880px;margin:0 auto}
+.pa .msg.ai{max-width:100%}
+.pa .bubble ol{padding-left:20px}
+.pa .citem .ct{text-decoration:none}
+.pa .cmenu .cmlink{text-decoration:none}
+.pa .cmenu .cmlink:hover{background:var(--c-raise)}
+.pa .cmenu .cmlink svg{flex:none}
+.pa .cbox textarea{max-height:200px;overflow-y:auto}
+.pa .cbox textarea:focus-visible{outline:none}
+.pa .cbox:focus-within{border-color:rgba(96,165,250,0.55)}
+.pa .act{text-decoration:none}
+.pa .act:disabled{opacity:.5;cursor:default}
+.pa .sugg button:disabled{opacity:.6;cursor:default}
+.pa .pa-chats{display:none}
+.pa .empty{padding:48px 24px}
+.pa .topbar{flex:none}
+.pa .doc .body section.hit{border-left:2px solid var(--c-blue);padding-left:12px;margin-left:-14px}
+.linkbtn{all:unset;color:var(--c-blue);cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+.linkbtn:focus-visible{outline:2px solid var(--c-focus);outline-offset:2px;border-radius:2px}
+.scr-dashboard .doc .body section.hit{border-left:2px solid var(--c-blue);padding-left:12px;margin-left:-14px}
+.light .pa .cbox:focus-within{border-color:#93c5fd}
+@media (max-width: 767.98px){
+  .pa .cs{position:absolute;z-index:31;top:0;bottom:0;left:0;width:min(300px,86vw);flex-basis:auto;transform:translateX(-102%);transition:transform .18s ease;box-shadow:0 24px 48px rgba(0,0,0,0.5)}
+  .pa .cs.min{width:min(300px,86vw);padding:12px}
+  .pa.drawer .cs{transform:none}
+  .pa .cs .cstoggle:not(.mini){display:none}
+  .pa .cs.min .csearch,.pa .cs.min .cgrp,.pa .cs.min .citem,.pa .cs.min .archnote,.pa .cs.min .src,.pa .cs.min .newchat{display:revert}
+  .pa .cs.min .mini{display:none}
+  .pa .pa-scrim{position:absolute;inset:0;z-index:30;background:rgba(0,0,0,0.45);border:0;padding:0;cursor:pointer}
+  .pa .pa-chats{display:inline-flex}
+  .pa .topbar{padding:8px 12px}
+  .pa .thread{padding:16px 16px 8px}
+  .pa .composer{padding:8px 12px 12px}
+  .pa .user .bubble{max-width:86%}
+  .pa .acts{padding-left:0;flex-wrap:wrap}
+  .pa .sugg{grid-template-columns:minmax(0,1fr)}
+  .pa .pa-pop.left,.pa .pa-pop.right{position:fixed;left:12px;right:12px;width:auto;top:120px}
+  .pa .doc{grid-template-columns:minmax(0,1fr)}
+  .pa .doc .toc{display:none}
+}
+@media (prefers-reduced-motion: reduce){ .pa .cs{transition:none} }
+.pa .cs:not(.min) .mini{display:none}
+/* Scroll areas inside windows use slim scrollbars, so they read as part of the panel rather than a page edge. */
+.casewin .winbody > .nav,.casewin .winbody > .main,.pa .cs,.pa .pa-scroll,.pa .pa-pop,.pa .plusmenu > div{scrollbar-width:thin;scrollbar-color:var(--c-line-strong) transparent}
+/* The app bar never widens the page: the tab strip gives way (scrolling within itself) before the right-hand controls. */
+.scr-dashboard .appbar{min-width:0;max-width:100vw}
+.scr-dashboard .appbar .tabsbar{min-width:0;overflow-x:auto;scrollbar-width:none}
+.scr-dashboard .appbar .tabsbar::-webkit-scrollbar{display:none}
+.scr-dashboard .appbar .tabsbar .navitem{flex:none}
+.scr-dashboard .appbar .right{flex:none}
+
+/* The assistant's written answers (Markdown) and their sources, in both themes. */
+.pa .md{font-size:15px;line-height:1.65;color:var(--c-fg2)}
+.pa .md>*:first-child{margin-top:0}
+.pa .md p{margin:0 0 10px}
+.pa .md h3{margin:16px 0 6px;font-size:16px;font-weight:600;line-height:1.3;color:var(--c-fg)}
+.pa .md h4{margin:12px 0 4px;font-size:15px;font-weight:600;line-height:1.3;color:var(--c-fg)}
+.pa .md ol,.pa .md ul{margin:0 0 10px;padding-left:22px}
+.pa .md li{margin:4px 0}
+.pa .md li>ol,.pa .md li>ul{margin:4px 0 2px}
+.pa .md strong{color:var(--c-fg)}
+.pa .md hr{border:0;border-top:1px solid var(--c-line);margin:14px 0}
+.pa .md-code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;padding:1px 5px;border-radius:5px;background:var(--c-raise2);color:var(--c-fg)}
+.pa .md-pre{margin:0 0 10px;padding:10px 12px;border-radius:8px;background:var(--c-raise2);overflow-x:auto;font-size:13px}
+.pa .md-table{overflow-x:auto;margin:0 0 12px;border:1px solid var(--c-line);border-radius:8px}
+.pa .md-table table{border-collapse:collapse;width:100%;font-size:14px}
+.pa .md-table th{text-align:left;font-weight:600;color:var(--c-fg);background:var(--c-raise2);padding:8px 10px;border-bottom:1px solid var(--c-line)}
+.pa .md-table td{padding:8px 10px;border-top:1px solid var(--c-line);vertical-align:top}
+.pa .md .cite{margin:0 0 0 3px}
+.pa .srcs{display:flex;flex-direction:column;gap:6px;margin:6px 0 10px}
+.pa .srcitem{border:1px solid var(--c-line);border-radius:8px;padding:0 12px}
+.pa .srcitem summary{display:flex;align-items:center;gap:8px;min-height:40px;cursor:pointer;font-size:13px;color:var(--c-sec);list-style:none}
+.pa .srcitem summary::-webkit-details-marker{display:none}
+.pa .srcitem summary .t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pa .srcitem[open] summary .t{white-space:normal}
+.pa .srcitem .quote{margin:0 0 10px;font-size:14px}
+.pa .srcitem>.cite{display:inline-block;margin:0 0 10px}
+
+/* New FIR: the copy itself beside what was read from it. The copy stays in view while the details scroll. */
+.nfsplit{display:grid;grid-template-columns:minmax(0,11fr) minmax(0,9fr);gap:20px;align-items:start}
+.nfdoc{position:sticky;top:0;display:flex;flex-direction:column;gap:10px;padding:14px;height:calc(100vh - 120px);min-height:480px;box-sizing:border-box}
+.nfscroll{flex:1;min-height:0;width:100%;overflow:auto;border:1px solid var(--c-line, rgba(255,255,255,0.08));border-radius:8px;box-sizing:border-box}
+.nfframe{background:#fff}
+.nftext{margin:0;padding:12px 14px;white-space:pre-wrap;word-break:break-word;font:13px/1.55 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+@media (max-width: 1023.98px){.nfsplit{grid-template-columns:minmax(0,1fr)}.nfdoc{position:static;height:72vh;min-height:360px}}
+/* Wide fields in the New FIR form's three-column rows; one column on a phone. */
+.g3>.span2{grid-column:span 2}
+.g3>.span3{grid-column:1/-1}
+@media (max-width: 760px){.g3>.span2{grid-column:auto}}
+/* A field with an error is outlined as well as described, in both themes. */
+:where(.scr-dashboard) :is(.in,.sel,.ta)[aria-invalid="true"]{border-color:#f87171;box-shadow:0 0 0 1px rgba(248,113,113,0.35)}
+.light :where(.scr-dashboard) :is(.in,.sel,.ta)[aria-invalid="true"]{border-color:#b42318;box-shadow:0 0 0 1px rgba(180,35,24,0.25)}
+/* Next actions: what a request is missing, and how to find it. */
+.gapguide{border:1px solid var(--c-line, rgba(255,255,255,0.1));border-left:3px solid #fbbf24;border-radius:10px;padding:14px 16px;font-size:14px;line-height:1.55}
+.gapguide>div:first-child svg{flex:none;width:18px;height:18px;color:#fbbf24;margin-top:2px}
+.gapsteps{margin:6px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+.light .gapguide{border-left-color:#b45309}
+.light .gapguide>div:first-child svg{color:#b45309}
+/* Next actions (v1 delivery): forwarding a request from the IO's own mailbox. */
+.fwd{border:1px solid var(--c-line, rgba(255,255,255,0.1));border-left:3px solid #60a5fa;border-radius:10px;padding:14px 16px}
+.light .fwd{border-left-color:#1d4ed8}
+
+/* Mail window: every part of a request's mail editable in place (features/requests/components/mail-window.tsx). */
+.mw{display:flex;flex-direction:column;gap:16px}
+.mw-bad{display:flex;gap:8px;align-items:flex-start;padding:10px 14px;border-radius:10px;background:var(--c-tint-red);color:var(--c-red);font-size:14px;font-weight:600}
+.mw-row{display:grid;grid-template-columns:84px minmax(0,1fr) auto;gap:8px 12px;align-items:start}
+.mw-row>label,.mw-row>.mw-k{font-size:13px;color:var(--c-mut);padding-top:11px}
+.mw-in{width:100%;box-sizing:border-box;min-height:40px;padding:8px 12px;border-radius:10px;border:1px solid var(--c-line-strong);background:var(--c-inner);color:var(--c-fg);font:inherit;font-size:14px}
+.mw-in:focus{outline:2px solid var(--c-focus);outline-offset:1px;border-color:transparent}
+textarea.mw-in{min-height:280px;resize:vertical;line-height:1.6;white-space:pre-wrap}
+.mw-in[aria-invalid="true"],.mw-box[aria-invalid="true"]{border-color:var(--c-red);box-shadow:0 0 0 1px var(--c-red)}
+.mw-err{font-size:13px;color:var(--c-red);margin-top:4px}
+.mw-hint{font-size:12px;color:var(--c-mut);margin-top:4px}
+.mw-ro{padding-top:10px;font-size:14px;overflow-wrap:anywhere}
+.mw-icon{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:9px;border:1px solid var(--c-line);background:var(--c-raise);color:var(--c-sec);cursor:pointer;padding:0;flex:none}
+.mw-icon:hover{color:var(--c-fg);background:var(--c-raise2)}
+.mw-icon:focus-visible{outline:2px solid var(--c-focus);outline-offset:2px}
+.mw-icon[data-done="true"]{color:var(--c-teal)}
+.mw-box{border:1px solid var(--c-line);border-radius:10px;padding:10px 12px;background:var(--c-raise)}
+.mw-chips{display:flex;flex-wrap:wrap;gap:8px}
+.mw-chip{display:inline-flex;align-items:center;gap:6px;max-width:100%;padding:4px 4px 4px 10px;border-radius:999px;border:1px solid var(--c-line-strong);background:var(--c-inner);font-size:13px}
+.mw-chip a{color:var(--c-blue);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mw-chip button{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:999px;border:0;background:transparent;color:var(--c-mut);cursor:pointer}
+.mw-chip button:hover{color:var(--c-fg);background:var(--c-raise2)}
+.mw-sugg{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;border:1px dashed var(--c-line-strong);background:transparent;color:var(--c-blue);font-size:12px;cursor:pointer}
+.mw-pick{display:flex;flex-direction:column;gap:2px;max-height:240px;overflow:auto;margin-top:8px}
+.mw-pick label{display:flex;gap:10px;align-items:center;padding:8px 6px;border-radius:8px;font-size:14px;cursor:pointer}
+.mw-pick label:hover{background:var(--c-raise2)}
+.mw-letter{white-space:pre-wrap;font-size:14px;line-height:1.6;padding:16px 18px;border-radius:10px;border:1px solid var(--c-line);background:var(--c-inner);overflow-wrap:anywhere}
+.mw-status{font-size:13px;color:var(--c-mut);margin-right:auto;display:inline-flex;align-items:center;gap:6px}
+.mw-status[data-tone="bad"]{color:var(--c-red)}
+@media (max-width:640px){.mw-row{grid-template-columns:minmax(0,1fr) auto}.mw-row>label,.mw-row>.mw-k{grid-column:1/-1;padding-top:0}}
+.mw .banner{padding:12px 14px;border-radius:10px;display:flex;gap:10px;align-items:flex-start;font-size:14px;line-height:1.5;border:1px solid var(--c-line-strong);background:var(--c-tint-blue);color:var(--c-fg2)}
+.mw .banner>svg{flex:none;width:18px;height:18px;margin-top:2px;color:var(--c-blue)}
+.mw .banner.ok{background:var(--c-tint-teal)}.mw .banner.ok>svg{color:var(--c-teal)}
+.mw .banner.warn{background:var(--c-tint-amber)}.mw .banner.warn>svg{color:var(--c-amber)}
+.mw-chk{display:flex;align-items:flex-start;gap:10px;font-size:14px;padding:6px 0;cursor:pointer}
+.mw-chk input{margin-top:3px}
+.btn.danger{background:var(--c-danger-solid);border-color:transparent;color:#fff}
+/* Case context window (features/case/components/case-context.tsx). */
+.ctx-kv{display:grid;grid-template-columns:220px minmax(0,1fr);gap:8px 16px;font-size:14px;margin:0}
+.ctx-kv dt{color:var(--c-mut)}
+.ctx-card{background:var(--c-inner);border:1px solid var(--c-line);border-radius:10px}
+.ctx-card summary::marker{color:var(--c-mut)}
+@media (max-width:640px){.ctx-kv{grid-template-columns:minmax(0,1fr);gap:2px 0}.ctx-kv dd{margin-bottom:8px !important}}
+/* Sortable column headings (components/design/sort.tsx). */
+.sortbtn{all:unset;display:inline-flex;align-items:center;gap:4px;cursor:pointer;font:inherit;color:inherit;letter-spacing:inherit;text-transform:inherit;white-space:nowrap}
+.sortbtn .sortico{opacity:.28;flex:none;transition:opacity .12s}
+.sortbtn:hover .sortico,.sortbtn:focus-visible .sortico{opacity:.55}
+.sortbtn.on .sortico{opacity:1}
+.sortbtn.on{color:var(--c-fg)}
+.sortbtn:focus-visible{outline:2px solid var(--c-focus);outline-offset:2px;border-radius:4px}
+@media (prefers-reduced-motion:reduce){.sortbtn .sortico{transition:none}}
+/* Date filter (components/design/date-range.tsx). */
+.drf-btn{display:inline-flex;align-items:center;gap:6px;min-height:32px;padding:0 10px;border-radius:8px;border:1px solid var(--c-line-strong);background:var(--c-raise);color:var(--c-sec);font:inherit;font-size:12px;font-weight:500;cursor:pointer;white-space:nowrap}
+.drf-btn:hover{color:var(--c-fg);background:var(--c-raise2)}
+.drf-btn.on{color:var(--c-blue);border-color:var(--c-blue-strong);background:var(--c-tint-blue)}
+.drf-btn.icon{position:relative;width:34px;min-height:34px;padding:0;justify-content:center}
+.drf-dot{position:absolute;top:5px;right:5px;width:6px;height:6px;border-radius:999px;background:var(--c-blue)}
+.drf-btn:focus-visible,.drf-opt:focus-visible,.drf-apply:focus-visible{outline:2px solid var(--c-focus);outline-offset:2px}
+.drf-pop{position:absolute;right:0;top:calc(100% + 6px);z-index:60;width:300px;max-width:calc(100vw - 32px);padding:12px;border-radius:12px;border:1px solid var(--c-line-strong);background:var(--c-card);color:var(--c-fg);box-shadow:0 16px 40px rgba(0,0,0,0.45);display:flex;flex-direction:column;gap:10px;text-align:left;font-size:13px}
+.drf-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.drf-opt{min-height:32px;padding:0 10px;border-radius:8px;border:1px solid var(--c-line);background:var(--c-raise);color:var(--c-fg);font:inherit;font-size:13px;cursor:pointer;text-align:left}
+.drf-opt:hover{background:var(--c-raise2)}
+.drf-opt.on{border-color:var(--c-blue-strong);color:var(--c-blue)}
+.drf-opt:disabled{opacity:.5;cursor:default}
+.drf-custom{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.drf-custom label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--c-mut)}
+.drf-custom input{min-height:34px;padding:0 8px;border-radius:8px;border:1px solid var(--c-line-strong);background:var(--c-inner);color:var(--c-fg);font:inherit;font-size:13px;color-scheme:inherit}
+.drf-err{font-size:12px;color:var(--c-red)}
+.drf-hint{font-size:12px;color:var(--c-mut)}
+.drf-foot{display:flex;gap:8px;justify-content:space-between}
+.drf-apply{min-height:32px;padding:0 14px;border-radius:8px;border:0;background:var(--c-accent);color:#fff;font:inherit;font-size:13px;font-weight:600;cursor:pointer}
+/* Dashboard: the money card (amount lost | held for victims) with its date filter. */
+.money2{position:relative}
+.money2-filter{align-self:flex-end;margin:-10px -12px -10px 0;position:relative;z-index:2}
+.money2-row{display:flex;align-items:flex-start;gap:20px;min-width:0;padding-top:4px}
+.money2-half{flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:8px;text-align:left;background:none;border:0;padding:0;color:inherit;font:inherit}
+button.money2-half{cursor:pointer;border-radius:8px}
+button.money2-half:hover .lbl{color:var(--c-fg)}
+button.money2-half:focus-visible{outline:2px solid var(--c-focus);outline-offset:4px}
+.money2-sep{flex:none;align-self:stretch;display:flex;align-items:center;font-size:44px;font-weight:200;line-height:1;color:var(--c-line-strong)}
+@media (max-width:900px){.kpis .money2{grid-column:1/-1 !important}}
+@media (max-width:480px){.money2-row{gap:10px}.money2-sep{font-size:32px}}
+/* Case assistant: the conversation fills the panel; the question box sits at the bottom. */
+.chatcol{flex:1 1 auto}
+.chatlayout .iconbtn{display:inline-flex;align-items:center;justify-content:center;border-radius:10px;border:1px solid var(--c-line);background:var(--c-raise);color:var(--c-sec);cursor:pointer;padding:0;flex:none}
+.chatlayout .iconbtn:hover{color:var(--c-fg);background:var(--c-raise2)}
+.chatlayout .iconbtn:focus-visible{outline:2px solid var(--c-focus);outline-offset:2px}
+/* The question box sits at the bottom, with or without a conversation above it (as in the Procedure Assistant). */
+.chatcol .chatform{margin-top:auto}
+.menuitem:hover,.menuitem[data-highlighted]{background:var(--c-raise2)}

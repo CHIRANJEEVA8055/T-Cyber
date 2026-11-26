@@ -1,0 +1,26 @@
+node_modules/
+.next/
+out/
+build/
+next-env.d.ts
+*.tsbuildinfo
+
+# local runtime data: SQLite databases and stored evidence originals
+data/
+
+# generated Prisma client
+src/generated/
+
+# env files (keep the example)
+.env
+.env.*
+!.env.example
+
+# test output
+playwright-report/
+test-results/
+coverage/
+
+# tool output: browser-automation logs and the generated knowledge graph (rebuilt with /graphify)
+.playwright-mcp/
+graphify-out/

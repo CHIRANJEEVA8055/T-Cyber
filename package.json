@@ -1,0 +1,70 @@
+{
+  "name": "t-cyber",
+  "version": "0.1.0",
+  "private": true,
+  "description": "T-CYBER: cybercrime investigation workspace (local demo build with simulated external integrations)",
+  "type": "module",
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "scripts": {
+    "dev": "next dev --port 3000",
+    "build": "next build",
+    "start": "next start --port 3000",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate deploy",
+    "db:seed": "tsx prisma/seed.ts",
+    "db:reset": "tsx scripts/reset-db.ts",
+    "setup": "prisma generate && prisma migrate deploy && tsx prisma/seed.ts",
+    "postinstall": "prisma generate",
+    "kb:import": "tsx scripts/kb-import.ts",
+    "nodal:import": "tsx scripts/nodal-import.ts",
+    "mo:classify": "tsx scripts/classify-mo.ts",
+    "actions:refresh": "tsx scripts/refresh-actions.ts",
+    "gmail:connect": "tsx scripts/gmail-connect.ts",
+    "ui:notes": "tsx scripts/ui-notes.ts"
+  },
+  "dependencies": {
+    "@fontsource/ibm-plex-sans": "5.3.0",
+    "@fontsource/inter": "^5.3.0",
+    "@prisma/adapter-better-sqlite3": "7.10.1",
+    "@prisma/client": "7.10.1",
+    "@xyflow/react": "12.12.1",
+    "clsx": "2.1.1",
+    "lucide-react": "1.70.0",
+    "next": "16.4.5",
+    "radix-ui": "1.8.1",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "server-only": "0.0.1",
+    "tailwind-merge": "3.7.0",
+    "unpdf": "2.1.0",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.65.0",
+    "@tailwindcss/postcss": "4.3.5",
+    "@types/node": "24.19.2",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "dotenv": "17.4.2",
+    "eslint": "9.39.5",
+    "eslint-config-next": "16.4.5",
+    "prisma": "7.10.1",
+    "tailwindcss": "4.3.5",
+    "tsx": "4.23.15",
+    "typescript": "5.9.3",
+    "vitest": "5.1.0"
+  },
+  "allowScripts": {
+    "better-sqlite3@12.11.1": true,
+    "esbuild@0.28.2": true,
+    "prisma@7.10.1": true,
+    "@prisma/engines@7.10.1": true
+  }
+}

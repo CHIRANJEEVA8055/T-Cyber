@@ -1,0 +1,1197 @@
+// T-CYBER canonical data model.
+//
+// Conventions
+// - Money is stored as BigInt minor units (paise). Null means "unknown", never zero.
+// - Status / kind columns are strings validated by Zod contracts in src/domain (SQLite has
+//   no native enums and plain strings keep the schema portable to other databases).
+// - JSON payload columns are strings suffixed "Json" and are parsed through Zod.
+// - All timestamps are stored in UTC; the UI renders Asia/Kolkata with an explicit label.
+// - Case-scoped records carry caseId so every query can be filtered by authorised case.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// ───────────────────────── Organisation & access ─────────────────────────
+
+model Station {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  name      String
+  district  String
+  address   String   @default("")
+  phone     String   @default("")
+  email     String   @default("")
+  createdAt DateTime @default(now())
+  users     User[]
+  cases     Case[]
+}
+
+model User {
+  id              String           @id @default(cuid())
+  username        String           @unique
+  displayName     String
+  rank            String
+  role            String // OFFICER | SUPERVISOR | DEVELOPER (keeps the knowledge base; cannot open cases) | SYSTEM
+  stationId       String
+  station         Station          @relation(fields: [stationId], references: [id])
+  passwordHash    String
+  active          Boolean          @default(true)
+  /// The officer's own From address for new drafts; null uses the station mailbox.
+  mailFrom        String?
+  /// The officer's own closing block for new drafts (JSON array of lines); null uses the station's.
+  mailClosingJson String?
+  createdAt       DateTime         @default(now())
+  sessions        Session[]
+  assignments     CaseAssignment[]
+}
+
+model Session {
+  id         String   @id // SHA-256 of the random session token; the raw token only lives in the cookie
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+  expiresAt  DateTime
+  lastSeenAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model CaseAssignment {
+  id         String   @id @default(cuid())
+  caseId     String
+  case       Case     @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  role       String // INVESTIGATING_OFFICER | ASSISTING_OFFICER
+  assignedAt DateTime @default(now())
+
+  @@unique([caseId, userId])
+}
+
+model Counter {
+  key   String @id
+  value Int
+}
+
+// ───────────────────────── Case & parties ─────────────────────────
+
+model Case {
+  id                   String    @id @default(cuid())
+  stationId            String
+  station              Station   @relation(fields: [stationId], references: [id])
+  referenceType        String // FIR | COMPLAINT
+  firNumber            Int?
+  firYear              Int
+  complaintRef         String?
+  title                String
+  fraudCategory        String?
+  narrative            String    @default("")
+  legalSections        String? // officer-entered or source-derived only; never defaulted
+  legalSectionsSource  String?
+  incidentStart        DateTime?
+  incidentEnd          DateTime?
+  reportedAt           DateTime?
+  registeredAt         DateTime?
+  status               String    @default("OPEN") // OPEN | CLOSED (explicit officer decision)
+  closureReason        String?
+  complaintChannel     String? // NCRP_PORTAL | HELPLINE_1930 (how the complaint reached the station)
+  complaintReceivedAt  DateTime?
+  moSummary            String? // modus operandi in a line, e.g. "Dating-app contact, then a fake trading app"
+  moVertical           String? // investigation vertical (MO.docx); null = not classified yet (read from the facts)
+  moSubtype            String? // the kind of fraud under that vertical, as the MO table names it
+  moBasis              String? // OFFICER | FIR (stated in it) | MODEL (local model) | FACTS | SECTIONS | DEFAULT (rules)
+  moReason             String? // what decided it, in one sentence
+  chargeSheetedAt      DateTime?
+  closureRequestedAt   DateTime?
+  closureRequestedById String?
+  closureRequestNote   String?
+  isDemo               Boolean   @default(false)
+  createdById          String
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+  version              Int       @default(1)
+
+  assignments         CaseAssignment[]
+  claims              VictimClaim[]
+  entities            Entity[]
+  partyRoles          PartyRole[]
+  relationships       Relationship[]
+  assertions          SourceAssertion[]
+  evidence            EvidenceItem[]
+  extractionRuns      ExtractionRun[]
+  candidates          ExtractionCandidate[]
+  transactions        Transaction[]
+  holds               Hold[]
+  holdEvents          HoldEvent[]
+  allocations         Allocation[]
+  refunds             Refund[]
+  requests            Request[]
+  responses           Response[]
+  findings            ResponseFinding[]
+  tasks               Task[]
+  locations           LocationObservation[]
+  auditEvents         AuditEvent[]
+  reports             Report[]
+  reviewMarkers       ReviewMarker[]
+  segments            EvidenceSegment[]
+  contactLogs         ContactLog[]
+  allocationDecisions AllocationDecision[]
+  chatThreads         ChatThread[]
+  handovers           CaseHandover[]
+  complaints          Complaint[]
+  inboxMessages       InboxMessage[]
+  fileReadings        FileReading[]
+
+  @@unique([stationId, firYear, firNumber])
+  @@unique([stationId, complaintRef])
+}
+
+model VictimClaim {
+  id              String   @id @default(cuid())
+  caseId          String
+  case            Case     @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  victimEntityId  String
+  victim          Entity   @relation(fields: [victimEntityId], references: [id])
+  lossAmountMinor BigInt
+  currency        String   @default("INR")
+  basis           String
+  status          String   @default("ACTIVE") // ACTIVE | WITHDRAWN
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  allocations  Allocation[]
+  refunds      Refund[]
+  transactions Transaction[]
+
+  @@unique([caseId, victimEntityId])
+}
+
+model Entity {
+  id                 String   @id @default(cuid())
+  caseId             String
+  case               Case     @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  kind               String // PERSON | ORGANISATION | BANK_ACCOUNT | UPI_ID | WALLET | PHONE | EMAIL | PLATFORM_PROFILE | WEBSITE | IP_ADDRESS | DEVICE | CASH
+  label              String
+  value              String // exactly as recorded; may be masked; leading zeros preserved
+  normalizedValue    String // dedupe key within the case (PERSON uses an opaque unique key: names never merge)
+  attributesJson     String   @default("{}")
+  caseRole           String?
+  verificationStatus String   @default("UNVERIFIED") // UNVERIFIED | CORROBORATED | DISPUTED
+  verificationNote   String?
+  isMasked           Boolean  @default(false)
+  isSynthetic        Boolean  @default(false)
+  discoveredAt       DateTime
+  discoveryPhase     Int      @default(0)
+  /// Officer's own working notes beside the record (never overwrite what a record said).
+  nickname           String?
+  belongsTo          String? // SUSPECT | VICTIM | WITNESS | UNKNOWN (officer's view, audited)
+  officerEntry       Boolean  @default(false) // added by an officer; no record has given it yet
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  partyRoles  PartyRole[]
+  claims      VictimClaim[]
+  txFrom      Transaction[]         @relation("TxFrom")
+  txTo        Transaction[]         @relation("TxTo")
+  relFrom     Relationship[]        @relation("RelFrom")
+  relTo       Relationship[]        @relation("RelTo")
+  holds       Hold[]
+  locations   LocationObservation[]
+  requestRefs RequestSubject[]
+
+  @@unique([caseId, kind, normalizedValue])
+  @@index([caseId])
+}
+
+model PartyRole {
+  id        String   @id @default(cuid())
+  caseId    String
+  case      Case     @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  entityId  String
+  entity    Entity   @relation(fields: [entityId], references: [id], onDelete: Cascade)
+  role      String // COMPLAINANT | VICTIM | WITNESS | PERSON_OF_INTEREST | ACCOUNT_HOLDER_ON_RECORD | OTHER
+  basis     String
+  createdAt DateTime @default(now())
+
+  @@unique([caseId, entityId, role])
+}
+
+model Relationship {
+  id             String    @id @default(cuid())
+  caseId         String
+  case           Case      @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  fromEntityId   String
+  fromEntity     Entity    @relation("RelFrom", fields: [fromEntityId], references: [id], onDelete: Cascade)
+  toEntityId     String
+  toEntity       Entity    @relation("RelTo", fields: [toEntityId], references: [id], onDelete: Cascade)
+  type           String // REGISTERED_TO | USED_BY | CONTROLLED_BY | POTENTIALLY_ASSOCIATED_WITH | LINKED_IDENTIFIER | CONTACTED
+  statement      String
+  status         String    @default("ASSERTED") // ASSERTED | CORROBORATED | DISPUTED | REFUTED
+  validFrom      DateTime?
+  validTo        DateTime?
+  discoveredAt   DateTime
+  discoveryPhase Int       @default(0)
+  dedupeKey      String
+  createdAt      DateTime  @default(now())
+
+  @@unique([caseId, dedupeKey])
+}
+
+model LocationObservation {
+  id                String    @id @default(cuid())
+  caseId            String
+  case              Case      @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  entityId          String?
+  entity            Entity?   @relation(fields: [entityId], references: [id])
+  observationType   String // IP_LOGIN | KYC_ADDRESS | CELL_SITE | TRANSACTION_LOCATION | REPORTED_ADDRESS
+  description       String
+  locationText      String
+  precision         String
+  eventAt           DateTime?
+  eventAtNote       String?
+  receivedAt        DateTime
+  corroboration     String    @default("UNCORROBORATED") // UNCORROBORATED | CORROBORATED | CONTRADICTED
+  corroborationNote String?
+  limitations       String?
+  discoveryPhase    Int       @default(0)
+  dedupeKey         String
+  createdAt         DateTime  @default(now())
+
+  @@unique([caseId, dedupeKey])
+}
+
+model SourceAssertion {
+  id          String       @id @default(cuid())
+  caseId      String
+  case        Case         @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  evidenceId  String
+  evidence    EvidenceItem @relation(fields: [evidenceId], references: [id], onDelete: Cascade)
+  page        Int?
+  row         Int?
+  line        Int?
+  locator     String
+  excerpt     String
+  subjectType String // ENTITY | RELATIONSHIP | TRANSACTION | HOLD | LOCATION | PARTY_ROLE | CLAIM | TASK | REFUND | CASE_FIELD
+  subjectId   String
+  stance      String       @default("SUPPORTS") // SUPPORTS | CONTRADICTS | MENTIONS
+  note        String?
+  dedupeKey   String
+  createdById String?
+  createdAt   DateTime     @default(now())
+
+  @@unique([caseId, dedupeKey])
+  @@index([caseId, subjectType, subjectId])
+  @@index([evidenceId])
+}
+
+// ───────────────────────── Evidence & extraction ─────────────────────────
+
+model EvidenceItem {
+  id                String         @id @default(cuid())
+  caseId            String
+  case              Case           @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  title             String
+  category          String // FIR_COPY | COMPLAINT | TRANSACTION_RECORD | BANK_RESPONSE | TELECOM_RESPONSE | PROVIDER_RESPONSE | EMAIL_MESSAGE | SCREENSHOT | OTHER
+  derivation        String         @default("ORIGINAL") // ORIGINAL | EXTRACTED_TEXT | OCR_TEXT | TRANSLATION | ANNOTATION | AI_SUMMARY | PREPARED (an FIR copy made from details entered by hand)
+  parentId          String?
+  parent            EvidenceItem?  @relation("EvidenceDerivation", fields: [parentId], references: [id])
+  derived           EvidenceItem[] @relation("EvidenceDerivation")
+  fileName          String
+  mimeType          String
+  sizeBytes         Int
+  sha256            String
+  storageKey        String // server-generated relative path inside STORAGE_DIR
+  pageCount         Int?
+  sourceDescription String
+  receivedAt        DateTime
+  uploadedById      String
+  uploadedAt        DateTime       @default(now())
+  responseId        String?
+  response          Response?      @relation("ResponseAttachments", fields: [responseId], references: [id])
+  processingStatus  String         @default("PENDING") // PENDING | TEXT_EXTRACTED | TABLE_PARSED | NO_TEXT_LAYER | ENCRYPTED | UNSUPPORTED | FAILED
+  processingNote    String?
+  reviewStatus      String         @default("UNREVIEWED") // UNREVIEWED | IN_REVIEW | REVIEWED
+  isSynthetic       Boolean        @default(false)
+
+  segments   EvidenceSegment[]
+  events     ProcessingEvent[]
+  assertions SourceAssertion[]
+  runs       ExtractionRun[]
+  readings   FileReading[]
+
+  @@index([caseId])
+}
+
+/// A file an officer added to a case from the case window ("Add files"): what it is, what in it relates to this
+/// FIR, and what would be added, read on this computer. Nothing changes in the case until the officer adds it.
+model FileReading {
+  id          String       @id @default(cuid())
+  caseId      String
+  case        Case         @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  evidenceId  String
+  evidence    EvidenceItem @relation(fields: [evidenceId], references: [id], onDelete: Cascade)
+  kind        String // BANK_STATEMENT | CALL_RECORDS | NCRP_TRAIL | DOCUMENT | NOTHING_READABLE
+  status      String       @default("READ") // READ | APPLIED | KEPT
+  resultJson  String // the reading: summary, insights, proposals with their sources
+  modelJson   String? // the local model's summary of a document, with quotes checked against the text
+  createdById String
+  createdAt   DateTime     @default(now())
+  appliedAt   DateTime?
+  appliedById String?
+  appliedJson String? // what was added
+
+  @@index([caseId, createdAt])
+  @@index([evidenceId])
+}
+
+model EvidenceSegment {
+  id         String       @id @default(cuid())
+  evidenceId String
+  evidence   EvidenceItem @relation(fields: [evidenceId], references: [id], onDelete: Cascade)
+  caseId     String
+  case       Case         @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  page       Int?
+  row        Int?
+  line       Int?
+  text       String
+  method     String // PDF_TEXT_LAYER | PLAIN_TEXT | CSV_ROW | EMAIL_BODY
+
+  @@index([evidenceId])
+  @@index([caseId])
+}
+
+model ProcessingEvent {
+  id         String       @id @default(cuid())
+  evidenceId String
+  evidence   EvidenceItem @relation(fields: [evidenceId], references: [id], onDelete: Cascade)
+  at         DateTime     @default(now())
+  step       String // RECEIVED | STORED | HASHED | PARSED | EXTRACTION_RUN | REVIEW_UPDATED
+  outcome    String // OK | WARNING | FAILED
+  detail     String
+  actorId    String?
+}
+
+model ExtractionRun {
+  id          String       @id @default(cuid())
+  caseId      String
+  case        Case         @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  evidenceId  String
+  evidence    EvidenceItem @relation(fields: [evidenceId], references: [id], onDelete: Cascade)
+  method      String // RULES_V1
+  status      String // COMPLETED | NOTHING_FOUND | NOT_SUPPORTED
+  note        String?
+  createdById String?
+  createdAt   DateTime     @default(now())
+
+  candidates ExtractionCandidate[]
+}
+
+model ExtractionCandidate {
+  id              String        @id @default(cuid())
+  caseId          String
+  case            Case          @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  runId           String
+  run             ExtractionRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+  evidenceId      String
+  field           String // PHONE | EMAIL | BANK_ACCOUNT | IFSC | UPI_ID | URL | IP_ADDRESS | AMOUNT | DATE_TIME | TXN_REFERENCE | PERSON_NAME | FIR_REFERENCE | TRANSACTION_ROW
+  originalValue   String
+  correctedValue  String?
+  normalizedValue String
+  structuredJson  String?
+  roleHint        String?
+  roleHintBasis   String?
+  uncertainty     String        @default("NONE") // NONE | MASKED | INCOMPLETE | UNCERTAIN_CHARACTERS | AMBIGUOUS_ROLE | AMBIGUOUS_FORMAT
+  uncertaintyNote String?
+  page            Int?
+  row             Int?
+  line            Int?
+  charStart       Int?
+  charEnd         Int?
+  excerpt         String
+  status          String        @default("PENDING") // PENDING | ACCEPTED | CORRECTED | REJECTED | ADDED
+  rejectReason    String?
+  linkedEntityId  String?
+  appliedAt       DateTime?
+  appliedRefJson  String?
+  reviewedById    String?
+  reviewedAt      DateTime?
+  createdAt       DateTime      @default(now())
+
+  @@index([runId])
+  @@index([evidenceId])
+}
+
+// ───────────────────────── Funds ledger ─────────────────────────
+
+model Transaction {
+  id             String       @id @default(cuid())
+  caseId         String
+  case           Case         @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  fromEntityId   String
+  fromEntity     Entity       @relation("TxFrom", fields: [fromEntityId], references: [id])
+  toEntityId     String
+  toEntity       Entity       @relation("TxTo", fields: [toEntityId], references: [id])
+  amountMinor    BigInt
+  currency       String       @default("INR")
+  occurredAt     DateTime
+  channel        String // UPI | IMPS | NEFT | RTGS | CASH_WITHDRAWAL | CARD | OTHER
+  reference      String?
+  kind           String // VICTIM_PAYMENT | ONWARD_TRANSFER | CASH_WITHDRAWAL
+  layer          Int // 1 = victim to first beneficiary; 2 = onward from a first-layer account; ...
+  claimId        String?
+  claim          VictimClaim? @relation(fields: [claimId], references: [id])
+  status         String // REPORTED_BY_VICTIM | CONFIRMED_BY_BANK | DISPUTED
+  discoveredAt   DateTime
+  discoveryPhase Int          @default(0)
+  dedupeKey      String
+  createdAt      DateTime     @default(now())
+
+  @@unique([caseId, dedupeKey])
+}
+
+model Hold {
+  id                   String    @id @default(cuid())
+  caseId               String
+  case                 Case      @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  accountEntityId      String
+  account              Entity    @relation(fields: [accountEntityId], references: [id])
+  holdKey              String
+  bankReference        String?
+  status               String // REQUESTED | RESTRICTION_CONFIRMED | CONFIRMED_HELD | RELEASED
+  requestedAmountMinor BigInt?
+  confirmedAmountMinor BigInt? // null = unknown; never treated as zero
+  confirmedAsOf        DateTime?
+  requestId            String?
+  expiresAt            DateTime? // when the bank says the hold lapses unless extended or restored
+  extensionNote        String?
+  note                 String?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+  version              Int       @default(1)
+
+  events      HoldEvent[]
+  allocations Allocation[]
+  refunds     Refund[]
+
+  @@unique([caseId, holdKey])
+}
+
+model HoldEvent {
+  id                  String   @id @default(cuid())
+  holdId              String
+  hold                Hold     @relation(fields: [holdId], references: [id], onDelete: Cascade)
+  caseId              String
+  case                Case     @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  at                  DateTime
+  recordedAt          DateTime @default(now())
+  type                String // REQUESTED | RESTRICTION_CONFIRMED | AMOUNT_CONFIRMED | AMOUNT_CHANGED | RELEASED_TO_VICTIM | RELEASED
+  amountMinor         BigInt?
+  previousAmountMinor BigInt?
+  note                String
+  actorId             String?
+}
+
+model Allocation {
+  id           String      @id @default(cuid())
+  caseId       String
+  case         Case        @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  holdId       String
+  hold         Hold        @relation(fields: [holdId], references: [id], onDelete: Cascade)
+  claimId      String
+  claim        VictimClaim @relation(fields: [claimId], references: [id], onDelete: Cascade)
+  amountMinor  BigInt
+  status       String // PROPOSED | CONFIRMED | WITHDRAWN
+  basis        String
+  createdById  String
+  createdAt    DateTime    @default(now())
+  decidedById  String?
+  decidedAt    DateTime?
+  decisionNote String?
+}
+
+model Refund {
+  id                 String      @id @default(cuid())
+  caseId             String
+  case               Case        @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  claimId            String
+  claim              VictimClaim @relation(fields: [claimId], references: [id], onDelete: Cascade)
+  holdId             String?
+  hold               Hold?       @relation(fields: [holdId], references: [id])
+  amountMinor        BigInt
+  status             String // AUTHORISED | INITIATED | CREDIT_CONFIRMED | FAILED | CANCELLED
+  authorityReference String
+  authorisedAt       DateTime?
+  initiatedAt        DateTime?
+  creditConfirmedAt  DateTime?
+  note               String?
+  createdById        String
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+  version            Int         @default(1)
+}
+
+// ───────────────────────── Routing directory ─────────────────────────
+
+model Recipient {
+  id                 String    @id @default(cuid())
+  configKey          String?   @unique // set when the entry is managed by config/t-cyber.config.json
+  name               String
+  organisation       String
+  organisationType   String // BANK | TELECOM | PAYMENT_PROVIDER | NPCI | PLATFORM | POLICE_UNIT
+  channel            String // EMAIL | PORTAL | UNICROSS | NPCI_ROUTE
+  address            String
+  ifscPrefix         String? // banks only: first four IFSC characters, used to name the bank of an extracted account
+  verificationStatus String // VERIFIED | UNVERIFIED | EXPIRED
+  verifiedById       String?
+  verifiedAt         DateTime?
+  verificationNote   String?
+  categoriesJson     String    @default("[]")
+  notes              String?
+  active             Boolean   @default(true)
+  isSynthetic        Boolean   @default(true)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  routes   RoutingRule[]
+  requests Request[]
+}
+
+model RoutingRule {
+  id            String     @id @default(cuid())
+  name          String
+  subjectKind   String // BANK_ACCOUNT | UPI_ID | PHONE | EMAIL | PLATFORM_PROFILE | IP_ADDRESS | WEBSITE
+  category      String // INFORMATION | PRESERVATION | HOLD | RESTORATION
+  resolveBy     String     @default("FIXED") // FIXED | ACCOUNT_BANK (bank named on the account) | LINKED_ACCOUNT_BANK (bank of the linked account)
+  recipientId   String?
+  recipient     Recipient? @relation(fields: [recipientId], references: [id])
+  templateId    String?
+  template      Template?  @relation(fields: [templateId], references: [id])
+  approvalRole  String // SUPERVISOR | INVESTIGATING_OFFICER
+  followUpDays  Int
+  procedureNote String
+  matchJson     String     @default("{}")
+  active        Boolean    @default(true)
+  updatedAt     DateTime   @updatedAt
+}
+
+model Template {
+  id              String        @id @default(cuid())
+  name            String
+  category        String
+  subjectTemplate String
+  bodyTemplate    String
+  version         Int           @default(1)
+  active          Boolean       @default(true)
+  updatedAt       DateTime      @updatedAt
+  routes          RoutingRule[]
+}
+
+// ───────────────────────── Requests & correspondence ─────────────────────────
+
+model Request {
+  id                String    @id @default(cuid())
+  caseId            String
+  case              Case      @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  reference         String    @unique
+  /// The reference the request had before references named their case (REQ-2026-0275); a reply quoting it still matches.
+  legacyReference   String?   @unique
+  category          String // INFORMATION | PRESERVATION | HOLD | RESTORATION
+  status            String // DRAFT | AWAITING_APPROVAL | APPROVED | SUBMITTED | ACKNOWLEDGED | PARTIAL_RESPONSE | COMPLETE_RESPONSE | REJECTED | SUBMISSION_FAILED
+  routeId           String?
+  recipientId       String
+  recipient         Recipient @relation(fields: [recipientId], references: [id])
+  channel           String
+  currentVersionNo  Int       @default(1)
+  approvedVersionNo Int?
+  approvedHash      String?
+  needsReview       Boolean   @default(false)
+  needsReviewReason String?
+  followUpAt        DateTime?
+  submittedAt       DateTime?
+  externalReference String?
+  taskId            String?
+  parentRequestId   String?
+  /// Set from a provider's preservation receipt: the records are kept until this date (a deadline to track).
+  preservedUntil    DateTime?
+  /// v1 delivery: when the approved request was mailed to the PS IO's mailbox to forward, and to which address.
+  handedOverAt      DateTime?
+  handedOverTo      String?
+  /// Gmail link (configuration "gmail"): the draft in the connected account's Drafts, kept in step both ways.
+  gmailDraftId      String?
+  /// The Gmail message id of the draft as last synced; a different one means it was edited in Gmail.
+  gmailMessageId    String?
+  /// Fingerprint of To, Subject, body and attachments as last synced, to tell which side changed.
+  gmailSyncedHash   String?
+  gmailSyncedAt     DateTime?
+  /// The To address the officer typed (or set in Gmail); the directory address is used until one is set.
+  gmailTo           String?
+  /// Why the last sync did not complete, shown on the draft until it does.
+  gmailError        String?
+  /// The Gmail conversation the sent request started: replies in it are linked to this request.
+  gmailThreadId     String?
+  /// Written by an officer from "New mail" (not proposed by the rules): its addressee is the address typed.
+  writtenByOfficer  Boolean   @default(false)
+  /// The mail window's working copy while an officer types ({ subject, body, attachmentIds, items, base }): saved as
+  /// typed, and made a version when the window closes, the mail is sent, or typing has paused for a minute.
+  liveJson          String?
+  liveAt            DateTime?
+  liveById          String?
+  caseSeq           Int? // the request's serial in its case: the "002" of REQ-412/2026-002 (reminders take their parent's)
+  createdById       String
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  version           Int       @default(1)
+
+  versions    RequestVersion[]
+  items       RequestItem[]
+  approvals   Approval[]
+  submissions Submission[]
+  notes       RequestNote[]
+  subjects    RequestSubject[]
+  responses   Response[]
+}
+
+model RequestVersion {
+  id                String    @id @default(cuid())
+  requestId         String
+  request           Request   @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  versionNo         Int
+  recipientId       String
+  subject           String
+  body              String
+  periodFrom        DateTime?
+  periodTo          DateTime?
+  scope             String
+  attachmentIdsJson String    @default("[]")
+  contentHash       String
+  basisJson         String    @default("{}")
+  changeNote        String?
+  /// The mailbox this version is sent from; null is the station mailbox (config mailbox.fromAddress).
+  fromAddress       String?
+  createdById       String
+  createdAt         DateTime  @default(now())
+
+  @@unique([requestId, versionNo])
+}
+
+model RequestSubject {
+  id        String  @id @default(cuid())
+  requestId String
+  request   Request @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  entityId  String
+  entity    Entity  @relation(fields: [entityId], references: [id], onDelete: Cascade)
+
+  @@unique([requestId, entityId])
+}
+
+model RequestItem {
+  id         String  @id @default(cuid())
+  requestId  String
+  request    Request @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  label      String
+  itemType   String // STATEMENT | KYC | BALANCE_CONFIRMATION | HOLD_CONFIRMATION | SUBSCRIBER_DETAILS | IP_LOGS | PRESERVATION_CONFIRMATION | RESTORATION_CONFIRMATION | OTHER
+  status     String  @default("PENDING") // PENDING | RECEIVED | PARTIAL | NOT_PROVIDED
+  responseId String?
+  note       String?
+  sortOrder  Int     @default(0)
+}
+
+model Approval {
+  id                String    @id @default(cuid())
+  requestId         String
+  request           Request   @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  versionNo         Int
+  contentHash       String
+  decision          String // APPROVED | RETURNED
+  note              String?
+  decidedById       String
+  decidedAt         DateTime  @default(now())
+  invalidatedAt     DateTime?
+  invalidatedReason String?
+}
+
+model Submission {
+  id                String   @id @default(cuid())
+  requestId         String
+  request           Request  @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  versionNo         Int
+  adapter           String
+  attemptedAt       DateTime @default(now())
+  outcome           String // SUCCEEDED | FAILED
+  externalReference String?
+  errorMessage      String?
+  /// The address used for this attempt, kept even if the directory entry changes later.
+  recipientAddress  String?
+  actorId           String
+  idempotencyKey    String   @unique
+}
+
+model RequestNote {
+  id        String   @id @default(cuid())
+  requestId String
+  request   Request  @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  authorId  String
+  body      String
+  createdAt DateTime @default(now())
+}
+
+model Response {
+  id                String    @id @default(cuid())
+  caseId            String?
+  case              Case?     @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  requestId         String?
+  request           Request?  @relation(fields: [requestId], references: [id])
+  matchStatus       String // MATCHED | NEEDS_MATCH_REVIEW | UNMATCHED
+  matchBasis        String
+  fromAddress       String
+  toAddress         String
+  subject           String
+  receivedAt        DateTime
+  bodyText          String
+  messageEvidenceId String?
+  channel           String // EMAIL | PORTAL_DOWNLOAD | MANUAL_IMPORT
+  responseType      String    @default("UNCLASSIFIED") // ACKNOWLEDGEMENT | PARTIAL | COMPLETE | REJECTION | UNCLASSIFIED
+  suggestedType     String?
+  reviewStatus      String    @default("UNREVIEWED") // UNREVIEWED | IN_REVIEW | APPLIED
+  appliedAt         DateTime?
+  appliedById       String?
+  matchScore        Int? // 0–100: how strongly the reply matches its request (rules: reference, account, sender)
+  firCount          Int? // replies that cover several FIRs (one attachment for 4 cases)
+  fingerprint       String    @unique
+  importedById      String
+  importedAt        DateTime  @default(now())
+  version           Int       @default(1)
+
+  attachments EvidenceItem[]    @relation("ResponseAttachments")
+  findings    ResponseFinding[]
+}
+
+model ResponseFinding {
+  id                 String    @id @default(cuid())
+  responseId         String
+  response           Response  @relation(fields: [responseId], references: [id], onDelete: Cascade)
+  caseId             String
+  case               Case      @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  findingType        String // ENTITY | TRANSACTION | HOLD_STATUS | BALANCE_UNCONFIRMED | KYC_RECORD | RELATIONSHIP | LOCATION_OBSERVATION | ITEM_NOT_PROVIDED | NOTE
+  classification     String // NEW | ALREADY_KNOWN | CONFLICTING | INCOMPLETE | UNCERTAIN
+  classificationNote String
+  summary            String
+  payloadJson        String
+  editedPayloadJson  String?
+  evidenceId         String?
+  locator            String?
+  excerpt            String?
+  page               Int?
+  row                Int?
+  line               Int?
+  requestItemId      String?
+  decision           String    @default("PENDING") // PENDING | ACCEPTED | EDITED | REJECTED | DEFERRED
+  decisionReason     String?
+  decidedById        String?
+  decidedAt          DateTime?
+  appliedAt          DateTime?
+  appliedRefJson     String?
+  sortOrder          Int       @default(0)
+}
+
+// ───────────────────────── Tasks / next actions ─────────────────────────
+
+model Task {
+  id                    String    @id @default(cuid())
+  caseId                String
+  case                  Case      @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  kind                  String // RECOMMENDATION | MISSING_INFORMATION | REVIEW | EXTERNAL_SUBMISSION | OFFICER_TASK
+  objective             String // FINANCIAL | IDENTITY | EVIDENCE
+  title                 String
+  question              String
+  purpose               String
+  relevance             String
+  recipientHint         String?
+  routeId               String?
+  requestCategory       String?
+  scope                 String?
+  periodFrom            DateTime?
+  periodTo              DateTime?
+  prerequisitesJson     String    @default("[]")
+  expectedClarification String
+  priority              String // HIGH | NORMAL | LOW
+  priorityReason        String
+  status                String // OPEN | DRAFT_PREPARED | WAITING | DEFERRED | DISMISSED | COMPLETED | SUPERSEDED
+  statusReason          String?
+  assigneeId            String?
+  dueAt                 DateTime?
+  deferredUntil         DateTime?
+  requestId             String?
+  responseId            String?
+  subjectEntityIdsJson  String    @default("[]")
+  completionEvidenceId  String?
+  completionNote        String?
+  supersededById        String?
+  externalReference     String?
+  dedupeKey             String
+  ruleId                String?
+  generatedBy           String // RULE | OFFICER | RESPONSE_REVIEW
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  version               Int       @default(1)
+
+  @@index([caseId, status])
+}
+
+// ───────────────────────── Activity, reports, review markers ─────────────────────────
+
+model AuditEvent {
+  id         String   @id @default(cuid())
+  caseId     String?
+  case       Case?    @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  actorId    String?
+  at         DateTime @default(now())
+  action     String
+  objectType String
+  objectId   String?
+  summary    String
+  detailJson String   @default("{}")
+  correctsId String?
+
+  @@index([caseId, at])
+}
+
+model Report {
+  id            String          @id @default(cuid())
+  caseId        String
+  case          Case            @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  kind          String // CASE_DIARY | CASE_SUMMARY | HANDOVER
+  title         String
+  status        String // DRAFT | REVIEWED
+  latestVersion Int
+  createdById   String
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  versions      ReportVersion[]
+}
+
+model ReportVersion {
+  id           String    @id @default(cuid())
+  reportId     String
+  report       Report    @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  versionNo    Int
+  body         String
+  sourcesJson  String    @default("[]")
+  generated    Boolean   @default(false)
+  changeNote   String?
+  createdById  String
+  createdAt    DateTime  @default(now())
+  reviewedById String?
+  reviewedAt   DateTime?
+
+  @@unique([reportId, versionNo])
+}
+
+model ReviewMarker {
+  id         String   @id @default(cuid())
+  caseId     String
+  case       Case     @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  userId     String
+  scope      String // GRAPH
+  reviewedAt DateTime
+
+  @@unique([caseId, userId, scope])
+}
+
+// ───────────────────────── Guidance library & integrations ─────────────────────────
+
+model KnowledgeDocument {
+  id             String             @id @default(cuid())
+  title          String
+  docNumber      String
+  issuingBody    String
+  jurisdiction   String
+  version        String
+  effectiveFrom  DateTime
+  status         String // DRAFT | CURRENT | SUPERSEDED | WITHDRAWN (only CURRENT and SUPERSEDED are answered from)
+  supersededById String?
+  summary        String
+  /// A warning shown with the document wherever it is cited (e.g. provider policies change: verify the live page).
+  reviewNote     String?
+  isSynthetic    Boolean            @default(true)
+  createdAt      DateTime           @default(now())
+  sections       KnowledgeSection[]
+  /// SOP | CIRCULAR | LAW | PROVIDER | OTHER: which "Answer from" choice covers the document.
+  category       String             @default("SOP")
+  /// The uploaded original, kept with its hash (null for the seeded illustrative summaries).
+  fileName       String?
+  storageKey     String?
+  sha256         String?
+  /// How the text was read, e.g. "Read from the PDF's text layer, 12 pages".
+  readNote       String?
+  /// A draft that will supersede this document when it is published.
+  replacesId     String?
+  createdById    String?
+  updatedAt      DateTime           @default(now())
+  publishedAt    DateTime?
+  publishedById  String?
+  retiredReason  String?
+}
+
+model KnowledgeSection {
+  id         String            @id @default(cuid())
+  documentId String
+  document   KnowledgeDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  sectionRef String
+  heading    String
+  text       String
+  topicsJson String            @default("[]")
+  sortOrder  Int
+}
+
+model IntegrationSetting {
+  key                String   @id // EMAIL_GATEWAY | BANK_CHANNEL | TELECOM_UNICROSS | NPCI_ROUTE | PROVIDER_PORTAL | AI_PROVIDER
+  label              String
+  mode               String // SIMULATED
+  failNextSubmission Boolean  @default(false)
+  note               String
+  updatedById        String?
+  updatedAt          DateTime @updatedAt
+}
+
+/// Contact with a victim or complainant: calls, visits and messages, with the next contact due.
+model ContactLog {
+  id             String    @id @default(cuid())
+  caseId         String
+  case           Case      @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  victimEntityId String
+  channel        String // CALL | VISIT | MESSAGE
+  summary        String
+  followUp       String? // e.g. "Receipt awaited"
+  nextDueAt      DateTime?
+  at             DateTime
+  byUserId       String
+  createdAt      DateTime  @default(now())
+
+  @@index([caseId, at])
+}
+
+/// The basis an officer records for splitting held money between competing victims (append-only).
+model AllocationDecision {
+  id          String   @id @default(cuid())
+  caseId      String
+  case        Case     @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  method      String // PROPORTIONAL | FIRST_IN_FIRST_OUT | COURT
+  note        String
+  sharesJson  String   @default("[]") // [{ claimId, amountMinor }] as computed when recorded
+  decidedById String
+  decidedAt   DateTime
+
+  @@index([caseId, decidedAt])
+}
+
+/// A conversation with the case assistant (kind CASE) or the procedure assistant (kind PROCEDURE).
+model ChatThread {
+  id         String        @id @default(cuid())
+  kind       String // CASE | PROCEDURE
+  caseId     String?
+  case       Case?         @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  userId     String
+  title      String
+  scope      String        @default("ALL") // procedure: ALL | SOP | LAW | PROVIDER
+  archivedAt DateTime?
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+  messages   ChatMessage[]
+
+  @@index([userId, kind, updatedAt])
+}
+
+model ChatMessage {
+  id             String     @id @default(cuid())
+  threadId       String
+  thread         ChatThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  role           String // USER | ASSISTANT
+  text           String
+  answerJson     String? // structured answer: blocks, citations, provider
+  attachmentJson String? // { kind: FILE | MAIL | CASE, label, sub, ref }
+  feedback       String? // UP | DOWN
+  createdAt      DateTime   @default(now())
+
+  @@index([threadId, createdAt])
+}
+
+/// A file an officer attached to a question in the procedure assistant. Its text is kept as numbered passages for
+/// answering, and the original is stored with its hash. Only the officer who uploaded it can use it; it never joins the
+/// knowledge base.
+model ChatUpload {
+  id           String   @id @default(cuid())
+  userId       String
+  fileName     String
+  mimeType     String
+  sizeBytes    Int
+  sha256       String
+  storageKey   String
+  passagesJson String   @default("[]") // [{ ref, text }]
+  pageCount    Int?
+  readNote     String?
+  createdAt    DateTime @default(now())
+
+  @@index([userId, createdAt])
+}
+
+/// Ready questions shown in the procedure assistant, kept by the developer.
+model PromptTemplate {
+  id          String   @id @default(cuid())
+  title       String
+  question    String
+  sourceLabel String   @default("")
+  sortOrder   Int      @default(0)
+  active      Boolean  @default(true)
+  createdById String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now())
+
+  @@index([active, sortOrder])
+}
+
+/// The nodal officers of banks, wallets, telecom operators, platforms and other providers, as listed in the CrimeOS
+/// nodal officer directory the station imports. A reference list: a contact becomes a request recipient only when a
+/// supervisor adds it to the recipient directory and verifies it. Kept through a demonstration reset.
+model NodalContact {
+  id          String    @id @default(cuid())
+  recordId    String    @unique
+  serviceType String
+  provider    String
+  /**
+   * Lower-case provider name without punctuation, for matching ("hdfc bank").
+   */
+  providerKey String
+  officerName String?
+  emailsJson  String    @default("[]")
+  phonesJson  String    @default("[]")
+  address     String?
+  listedAt    DateTime?
+  source      String
+  importedAt  DateTime  @default(now())
+
+  @@index([providerKey])
+  @@index([serviceType])
+}
+
+/// Which derived notifications an officer has read (notifications themselves are computed from the records).
+model NotificationRead {
+  id     String   @id @default(cuid())
+  userId String
+  key    String
+  readAt DateTime @default(now())
+
+  @@unique([userId, key])
+}
+
+/// The station's register of NCRP portal and 1930 helpline complaints. Most are handled without an FIR;
+/// those that become FIRs link to their case.
+model Complaint {
+  id              String   @id @default(cuid())
+  ackNumber       String   @unique
+  channel         String // NCRP_PORTAL | HELPLINE_1930
+  receivedAt      DateTime
+  category        String // INVESTMENT | OTP | LOAN | JOB | COURIER | SEXTORTION | UPI | OTHER
+  categoryLabel   String
+  complainantName String? // null when the complainant asked for the name to be withheld
+  lossAmountMinor BigInt   @default(0)
+  heldAmountMinor BigInt   @default(0) // a hold placed through 1930 before any FIR
+  note            String   @default("")
+  status          String   @default("AWAITING_FIR") // AWAITING_FIR | REGISTERED | CLOSED_NO_FIR
+  caseId          String?
+  case            Case?    @relation(fields: [caseId], references: [id], onDelete: SetNull)
+  isSynthetic     Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([status, receivedAt])
+  @@index([receivedAt])
+}
+
+/// The station mailbox (simulated). Messages wait here until an officer reads one into a case.
+model InboxMessage {
+  id              String    @id @default(cuid())
+  fromAddress     String
+  toAddress       String
+  subject         String
+  receivedAt      DateTime
+  bodyText        String
+  channel         String    @default("EMAIL")
+  attachmentsJson String    @default("[]") // [{ fileName, mimeType, sizeBytes, storageKey, sha256 }]
+  status          String    @default("UNREAD") // UNREAD | IMPORTED | DISMISSED
+  caseId          String?
+  case            Case?     @relation(fields: [caseId], references: [id], onDelete: SetNull)
+  responseId      String?
+  importedById    String?
+  importedAt      DateTime?
+  isSynthetic     Boolean   @default(false)
+  /// Where it came from: STATION (the simulated station mailbox) or GMAIL (read from the linked Gmail account).
+  source          String    @default("STATION")
+  gmailMessageId  String?   @unique
+  gmailThreadId   String?
+  /// The request the local model or the rules think it answers, when that was not certain enough to link it.
+  suggestedRequestId String?
+  suggestionNote  String?
+  createdAt       DateTime  @default(now())
+
+  @@index([status, receivedAt])
+}
+
+/// Each message seen in the linked Gmail account's inbox, so it is looked at once. A message that does not concern
+/// any case is recorded by its id only: its content is never stored.
+model GmailSeen {
+  messageId  String   @id
+  threadId   String
+  /// IMPORTED (linked to a request) | QUEUED (in the station inbox for an officer) | IGNORED (not about a case) | FAILED
+  outcome    String
+  reason     String?
+  responseId String?
+  inboxMessageId String?
+  seenAt     DateTime @default(now())
+
+  @@index([seenAt])
+}
+
+/// Handing a case to another officer: prepared by the current officer, accepted by the receiver or a supervisor.
+model CaseHandover {
+  id              String    @id @default(cuid())
+  caseId          String
+  case            Case      @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  fromUserId      String
+  toUserId        String
+  status          String    @default("PREPARED") // PREPARED | ACCEPTED | CANCELLED
+  reportId        String?
+  reportVersionNo Int?
+  note            String    @default("")
+  preparedAt      DateTime
+  decidedAt       DateTime?
+  decidedById     String?
+
+  @@index([caseId, preparedAt])
+}
+
+/// A mail T-CYBER sent or kept: with transport "SIMULATED" it stays here and nothing leaves the server.
+model OutboundMail {
+  id                String   @id @default(cuid())
+  caseId            String?
+  requestId         String?
+  toAddress         String
+  fromAddress       String
+  subject           String
+  bodyText          String
+  attachmentIdsJson String   @default("[]")
+  transport         String // SIMULATED | SMTP
+  status            String // KEPT (simulated) | SENT | FAILED
+  error             String?
+  messageId         String?
+  actorId           String
+  createdAt         DateTime @default(now())
+
+  @@index([requestId])
+}

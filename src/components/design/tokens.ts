@@ -1,0 +1,36 @@
+/**
+ * Colours for inline styles. The design writes dark-theme hex values inline and repaints them in the light theme;
+ * here every inline colour is a CSS variable (globals.css) whose light value is the design's light repaint.
+ */
+export const C = {
+  bg: "var(--c-bg)",
+  panel: "var(--c-panel)",
+  card: "var(--c-card)",
+  inner: "var(--c-inner)",
+  chip: "var(--c-chip)",
+  chipFg: "var(--c-chip-fg)",
+  fg: "var(--c-fg)",
+  fg2: "var(--c-fg2)",
+  fg3: "var(--c-fg3)",
+  sec: "var(--c-sec)",
+  mut: "var(--c-mut)",
+  dim: "var(--c-dim)",
+  faint: "var(--c-faint)",
+  line: "var(--c-line)",
+  lineSoft: "var(--c-line-soft)",
+  lineStrong: "var(--c-line-strong)",
+  blue: "var(--c-blue)",
+  blueStrong: "var(--c-blue-strong)",
+  teal: "var(--c-teal)",
+  tealStrong: "var(--c-teal-strong)",
+  amber: "var(--c-amber)",
+  orange: "var(--c-orange)",
+  orangeStrong: "var(--c-orange-strong)",
+  violet: "var(--c-violet)",
+  red: "var(--c-red)",
+  tintBlue: "var(--c-tint-blue)",
+  tintTeal: "var(--c-tint-teal)",
+  tintAmber: "var(--c-tint-amber)",
+  tintOrange: "var(--c-tint-orange)",
+  tintViolet: "var(--c-tint-violet)",
+} as const;

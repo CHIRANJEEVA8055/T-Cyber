@@ -1,0 +1,253 @@
+{
+  "$comment": "T-CYBER station configuration. Edit values here; the application re-reads this file automatically on the next page load. Recipient address changes reset that recipient to 'unverified' until a supervisor verifies it in Settings. All values below are synthetic demonstration data; use example.invalid addresses for demos.",
+  "station": {
+    "code": "PS-MDP",
+    "name": "PS Madhapur",
+    "district": "Cyberabad",
+    "address": "Cyber Crime Wing, PS Madhapur, Madhapur, Hyderabad 500081 (synthetic)",
+    "phone": "+91-00000-00000",
+    "email": "ps-madhapur@police.example.invalid",
+    "letterhead": [
+      "GOVERNMENT OF TELANGANA",
+      "(POLICE DEPARTMENT)"
+    ]
+  },
+  "mailbox": {
+    "fromAddress": "io.ps-madhapur@police.example.invalid",
+    "displayName": "Investigating Officer, PS Madhapur",
+    "signature": [
+      "PS Madhapur, Cyberabad",
+      "Cyber Crime Wing",
+      "Tel: +91-00000-00000"
+    ]
+  },
+  "delivery": {
+    "$comment": "How approved requests leave the station. \"gmail\" (prototype): they are sent from the Gmail account in \"gmail\" below, to the address the officer types. \"via-io\": each is mailed to the IO mailbox (ioMailbox) and the IO forwards it, then marks it as forwarded. \"direct\": sent straight to the nodal officer (needs the station mailbox's SMTP/IMAP access). transport applies to via-io: \"simulated\" keeps the mail in T-CYBER; \"smtp\" uses the mail server set in .env (SMTP_HOST, SMTP_PORT, SMTP_SECURE, SMTP_USER, SMTP_PASS).",
+    "mode": "gmail",
+    "ioMailbox": "io.ps-madhapur@police.example.invalid",
+    "ioName": "Investigating Officer, PS Madhapur",
+    "transport": "simulated"
+  },
+  "gmail": {
+    "$comment": "Prototype link to one Gmail account. Every request draft is also kept in this account's Drafts; edits made in T-CYBER or in Gmail are carried to the other side; an approved request is sent from this account to the address the officer types. senderApproves: the officer who presses Send in the mail window approves the version they send (logged); set it to false to have another officer approve a version its author wrote. readReplies: replies that arrive in this account's inbox are read and linked to the request they answer (needs the read permission: connect again once after turning it on); mail that is not about a case is skipped and never stored. Put the Google OAuth client file (credentials.json) at credentialsFile, then run `npm run gmail:connect` once on this server and sign in to the account. Set enabled to false to switch the link off.",
+    "enabled": true,
+    "account": "vivekananda7007@gmail.com",
+    "credentialsFile": "data/secrets/gmail-credentials.json",
+    "tokenFile": "data/secrets/gmail-token.json",
+    "syncSeconds": 20,
+    "senderApproves": true,
+    "readReplies": true
+  },
+  "requests": {
+    "referencePrefix": "REQ",
+    "defaultFollowUpDays": 7,
+    "autoDraft": true,
+    "noticeHeadings": {
+      "INFORMATION": "Notice U/Sec 94 BNSS",
+      "PRESERVATION": "Notice U/Sec 94 BNSS"
+    }
+  },
+  "directory": [
+    {
+      "key": "bank-a",
+      "organisation": "Bank A",
+      "name": "Nodal Officer (LEA)",
+      "organisationType": "BANK",
+      "channel": "EMAIL",
+      "address": "nodal.officer@bank-a.example.invalid",
+      "ifscPrefix": "BNKA",
+      "categories": [
+        "INFORMATION",
+        "HOLD",
+        "RESTORATION"
+      ],
+      "verified": true,
+      "notes": "Synthetic bank. Nodal officer mailbox for law-enforcement requests, demonstration only."
+    },
+    {
+      "key": "bank-b",
+      "organisation": "Bank B",
+      "name": "Nodal Officer (LEA)",
+      "organisationType": "BANK",
+      "channel": "EMAIL",
+      "address": "nodal.officer@bank-b.example.invalid",
+      "ifscPrefix": "BNKB",
+      "categories": [
+        "INFORMATION",
+        "HOLD",
+        "RESTORATION"
+      ],
+      "verified": true,
+      "notes": "Synthetic bank. Nodal officer mailbox for law-enforcement requests, demonstration only."
+    },
+    {
+      "key": "bank-c",
+      "organisation": "Bank C",
+      "name": "Nodal Officer (LEA)",
+      "organisationType": "BANK",
+      "channel": "EMAIL",
+      "address": "nodal.officer@bank-c.example.invalid",
+      "ifscPrefix": "BNKC",
+      "categories": [
+        "INFORMATION",
+        "HOLD",
+        "RESTORATION"
+      ],
+      "verified": true,
+      "notes": "Synthetic bank. Nodal officer mailbox for law-enforcement requests, demonstration only."
+    },
+    {
+      "key": "bank-d",
+      "organisation": "Bank D",
+      "name": "Nodal Officer (LEA)",
+      "organisationType": "BANK",
+      "channel": "EMAIL",
+      "address": "nodal.officer@bank-d.example.invalid",
+      "ifscPrefix": "BNKD",
+      "categories": [
+        "INFORMATION",
+        "HOLD",
+        "RESTORATION"
+      ],
+      "verified": true,
+      "notes": "Synthetic bank. Nodal officer mailbox for law-enforcement requests, demonstration only."
+    },
+    {
+      "key": "bank-e",
+      "organisation": "Bank E",
+      "name": "Nodal Officer (LEA)",
+      "organisationType": "BANK",
+      "channel": "EMAIL",
+      "address": "nodal.officer@bank-e.example.invalid",
+      "ifscPrefix": "BNKE",
+      "categories": [
+        "INFORMATION",
+        "HOLD",
+        "RESTORATION"
+      ],
+      "verified": true,
+      "notes": "Synthetic bank. Nodal officer mailbox for law-enforcement requests, demonstration only."
+    },
+    {
+      "key": "bank-f",
+      "organisation": "Bank F",
+      "name": "Nodal Officer (LEA)",
+      "organisationType": "BANK",
+      "channel": "EMAIL",
+      "address": "nodal.officer@bank-f.example.invalid",
+      "ifscPrefix": "BNKF",
+      "categories": [
+        "INFORMATION",
+        "HOLD",
+        "RESTORATION"
+      ],
+      "verified": true,
+      "notes": "Synthetic bank. Nodal officer mailbox for law-enforcement requests, demonstration only."
+    },
+    {
+      "key": "bank-v",
+      "organisation": "Bank V",
+      "name": "Nodal Officer (LEA)",
+      "organisationType": "BANK",
+      "channel": "EMAIL",
+      "address": "nodal.officer@bank-v.example.invalid",
+      "ifscPrefix": "BNKV",
+      "categories": [
+        "INFORMATION",
+        "HOLD",
+        "RESTORATION"
+      ],
+      "verified": true,
+      "notes": "Synthetic bank where the victims in the demonstration hold their own accounts."
+    },
+    {
+      "key": "unicross-zone",
+      "organisation": "UNICROSS, Zonal ACP Madhapur",
+      "name": "UNICROSS desk",
+      "organisationType": "POLICE_UNIT",
+      "channel": "UNICROSS",
+      "address": "unicross.madhapur@police.example.invalid",
+      "categories": [
+        "INFORMATION"
+      ],
+      "verified": true,
+      "notes": "Call records and subscriber forms go through the Zonal ACP's UNICROSS desk; replies come back through the DD mailbox to the station (synthetic route)."
+    },
+    {
+      "key": "npci-route",
+      "organisation": "NPCI",
+      "name": "UPI law-enforcement desk",
+      "organisationType": "NPCI",
+      "channel": "NPCI_ROUTE",
+      "address": "upi-lea@npci.example.invalid",
+      "categories": [
+        "INFORMATION"
+      ],
+      "verified": true,
+      "notes": "UPI beneficiary traces (synthetic route)."
+    },
+    {
+      "key": "dating-portal",
+      "organisation": "Dating platform",
+      "name": "Law-enforcement response portal",
+      "organisationType": "PLATFORM",
+      "channel": "PORTAL",
+      "address": "Dating platform LE portal (dating-portal.example.invalid)",
+      "categories": [
+        "PRESERVATION",
+        "INFORMATION"
+      ],
+      "verified": true,
+      "notes": "Provider portal. The officer submits on the portal and records the reference."
+    },
+    {
+      "key": "messaging-portal",
+      "organisation": "Messaging platform",
+      "name": "Law-enforcement response portal",
+      "organisationType": "PLATFORM",
+      "channel": "PORTAL",
+      "address": "Messaging platform LE portal (messaging-portal.example.invalid)",
+      "categories": [
+        "PRESERVATION",
+        "INFORMATION"
+      ],
+      "verified": true,
+      "notes": "Provider portal. The officer submits on the portal and records the reference."
+    },
+    {
+      "key": "mail-portal",
+      "organisation": "Mail provider",
+      "name": "Law-enforcement response portal",
+      "organisationType": "PLATFORM",
+      "channel": "PORTAL",
+      "address": "Mail provider LE portal (mail-portal.example.invalid)",
+      "categories": [
+        "PRESERVATION",
+        "INFORMATION"
+      ],
+      "verified": false,
+      "verificationNote": "Portal address supplied informally; not yet verified by the station. Submission is blocked until verified.",
+      "notes": "Provider portal (synthetic)."
+    },
+    {
+      "key": "payment-app",
+      "organisation": "Payment app",
+      "name": "LEA desk",
+      "organisationType": "PLATFORM",
+      "channel": "EMAIL",
+      "address": "lea.desk@payment-app.example.invalid",
+      "categories": [
+        "INFORMATION"
+      ],
+      "verified": true,
+      "notes": "KYC of UPI handles registered with the app (synthetic)."
+    }
+  ],
+  "ai": {
+    "provider": "ollama",
+    "host": "http://127.0.0.1:11434",
+    "model": "gemma4:26b",
+    "timeoutSeconds": 180,
+    "allowNonLocalHost": false
+  }
+}
